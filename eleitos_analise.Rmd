@@ -1,0 +1,195 @@
+---
+title: "Vereadores eleitos no município do Rio de Janeiro"
+author: "polinho"
+date: "16/11/2020"
+output: 
+    html_document:
+      theme: flatly
+      toc: yes
+      toc_float:
+        collapsed: yes
+        smooth_scroll: no
+---
+
+<center>
+
+<br>
+<br>
+<br>
+<br>
+
+<center>
+## Eleitos entre Esquerda, Direita e Centro
+A direita elegeu a maioria dos candidatos, enquanto o centro teve a menor expressão de candidatos eleitos neste pleito. Seguindo a classificação do especialista Luís Augusto do IESP-UERJ, temos a seguinta distribuição abaixo:
+
+```{r include=FALSE}
+library(plotly)
+library(ggplot2)
+library(lubridate)
+library(rmarkdown)
+library(ggwordcloud)
+library(stringr)
+library(knitr)
+library(dplyr)
+library(epiDisplay)
+```
+
+```{r echo=FALSE}
+options(scipen = 999)
+ver <- read.csv("Vereadores eleitos Rio de Janeiro 2020.csv", colClasses = "character", sep = "|")
+pos <- read.csv("PARTIDOS_POSICIONAMENTO_SIGLAS.csv", colClasses = "character", sep = "|")
+ver$Partido <- str_trim(ver$Partido)
+base <- merge(ver, pos, by.x = "Partido", by.y = "Partido", all.x = T)
+```
+
+```{r echo=FALSE}
+tab1(base$Posição, graph = F, sort.group = "decreasing")
+```
+
+  
+  
+## Total de eleitos por partido
+Os três partidos que mais elegeram foram Republicanos, PSOL e DEM com 7 candidates eleites cada. A lista completa de quantos vereadores cada partido elegeu você pode conferir abaixo:
+```{r echo=FALSE}
+tab1(ver$Partido, graph = F, sort.group = "decreasing")
+```
+
+  
+  
+## Distribuição de gênero
+As mulheres eleitas representam apenas 19,6% do total de eleitos. Um número abaixo da nossa última representatividade para o estado do Rio de Janeiro, que contava com aproximadamente 30% de mulheres na câmara dos vereadores. Você pode conferir mais nesta [reportagem](https://datalabe.org/nao-vote-em-branco-vote-na-preta/) .
+A distribuição de gênero entre cada posição ideológica resultou na seguinte:
+```{r echo=FALSE}
+base$Gênero <- str_trim(base$Gênero)
+tabpct(base$Posição, base$Gênero, percent = "row", col = c("light pink", "light blue"), xlab="Posicionamento", ylab="Gênero", main="")
+```
+
+Nela percebemos que apenas na esquerda as mulheres tem uma participação menos pior do que em outros posicionamentos de forma proporcional, sendo 36,4% das eleitas. Enquanto que na direita e no centro a participação de candidatas femininas foi de aproximadamente 15%.
+  
+Tá afim de saber a quantidade exata de homens e mulheres em cada partido? Passa o mouse no gráfico abaixo para conferir:
+```{r echo=FALSE}
+base$Partido <- as.factor(base$Partido)
+base$Partido <- factor(base$Partido, levels = c("REP", "PSOL", "DEM", "PT", "PSD", "AV", "PTB", "PSC", "PP", "PL", "CD", "SD", "PTC", "PSL", "PROS", "PODE", "PMN", "PDT", "PAT", "NOVO", "MDB", "DC"))
+parts <- c("blue", "red", "blue", "red", "yellow", "blue", "blue", "blue", "blue", "blue", "yellow", "blue", "blue", "blue", "blue", "blue", "blue", "red", "blue", "blue", "blue", "blue")
+
+genero <- ggplot(base, aes(x = Partido, fill= Gênero)) +
+  geom_bar()+
+  labs(x="Partidos", y="Distribuição de gênero no RJ")+
+  theme(axis.text.y = element_text(colour = parts ))+
+  coord_flip()
+ggplotly(genero)
+```
+
+Da esquerda, o PT e o PSOL elegeram duas mulheres cada um, enquanto o PDT elegeu apenas um homem. O Democratas foi o outro único partido que elegeu duas mulheres.
+  
+  
+## Distribuição racial
+75% dos eleitos são brancos/brancas. De uma forma geral, o Centro foi o que alcançou a melhor homegeneidade entre brancos e negros, mas sem apresentar nenhum candidato eleito auto declarado preto. 
+A direita tem uma quantidade bruta mais elevada de negros, e a mesma quantidade de candidatos pretos (dois em cada posicionamento). Pode passar o mouse para conferir aqui também:
+```{r echo=FALSE, warning=FALSE}
+raca <- ggplot(base, aes(x = Posição, fill= Raça.Cor)) +
+  geom_bar()+
+  labs(x="Posicionamento", y="Distribuição da raça/cor no RJ")
+  
+ggplotly(raca)
+```
+
+  
+  
+```{r echo=FALSE}
+racagen <- ggplot(base, aes(x = Gênero, fill= Raça.Cor)) +
+  geom_bar()+
+  labs(x="Gênero", y="Distribuição da raça/cor no RJ")
+  
+ggplotly(racagen)
+```
+
+## Distribuição da idade
+A média de idade dos candidatos foi de 48 anos, porém dividido para cada segmento, temos:
+```{r echo=FALSE, warning=FALSE}
+base$Idade <- as.numeric(base$Idade)
+base$Posição <- as.factor(base$Posição)
+base$Posição <- factor(base$Posição, levels = c("ESQUERDA", "CENTRO", "DIREITA"))
+ggplot(base, aes(Posição, Idade, fill=Posição))+
+  geom_boxplot()
+```
+
+Os posicionamentos não se diferem nas médias de idade de forma siginificativa. Mas na distribuição geral vemos que, a esquerda possui candidatos mais jovens que os demais posicionamentos, e a direita os com maior idade que os demais. 
+  
+  
+## Mandatos e experiência dos candidatos
+25% dos candidatos estão em seu primeiro mandato, 21% em seu segundo mandato e 13% no terceiro mandato. 
+A esquerda é o posicionamento político com menos candidatos com muitos mandadtos, enquanto que a direita é o posicionamento com a maior quantidade de mandatos. Jorge Felipe (DEM) e Rosa Fernandes (PSC) vão para seu oitavo mandato, configurando como os mais antigos na política.
+```{r echo=FALSE}
+base$Mandato <- str_trim(base$Mandato)
+mandato <- ggplot(subset(base, Mandato!=""), aes(Posição, fill=Mandato))+
+  geom_bar(show.legend = F)+
+  labs(x="Posicionamento", y="", fill="")
+ggplotly(mandato + theme (legend.position="none"))
+```
+
+  
+## Onde vivem os candidatos?
+Os candidatos são prioritariamente advindos da Barra da Tijuca, como mostra o gráfico a seguir:
+```{r echo=FALSE}
+onde <- table(base$Território.atual)
+onde <- cbind(bairro=row.names(onde), qtd=onde)
+onde <- as.data.frame.matrix(onde)
+onde <- subset(onde, bairro!="")
+onde$qtd <- as.character(onde$qtd)
+onde$qtd <- as.numeric(onde$qtd)
+local <- ggplot(onde, aes(x= reorder(bairro, desc(qtd)), y= qtd, fill=bairro)) +
+  geom_bar(stat="identity", show.legend = F) +
+  coord_flip()
+ggplotly(local + theme(legend.position = "none"))
+```
+
+  
+  
+## Análise dos temas no Instagram
+Nós coletamos todas as postagens dos candidatos que usaram o Instagram, e tabelamos todas as hashtags utilizadas mais de três vezes nas postagens. Nosso interesse foi perceber uma diferença de temas entre eleitos brancos e negros.
+```{r echo=FALSE}
+hash <- read.csv("Dados_insta_vereadores _edi.csv", sep=",", colClasses = "character")
+hash$Vereador <- str_trim(hash$Vereador)
+reduraca <- base[,c(2,8)]
+hashraca <- merge(hash, reduraca, by.x="Vereador", by.y = "Vereador", all.x = T)
+hashraca <- hashraca[,-c(4,5,6)]
+hashraca$Raça.Cor[which(hashraca$Raça.Cor=="Preta")] <- "Negra"
+hashraca$Raça.Cor[which(hashraca$Raça.Cor=="Parda")] <- "Negra"
+hashbranca <- subset(hashraca, Raça.Cor=="Branca")
+hashnegra <- subset(hashraca, Raça.Cor=="Negra")
+oquebranca <- unlist(strsplit(hashbranca$Legendas, "#"))
+oquebranca <- str_replace_all(oquebranca, " ", "")
+oquebranca <-  table(oquebranca)
+oquebranca <- cbind(oque=row.names(oquebranca), qtd=oquebranca)
+oquebranca <- as.data.frame.matrix(oquebranca)
+oquebranca$qtd <- as.character(oquebranca$qtd)
+oquebranca$qtd <- as.numeric(oquebranca$qtd)
+oquebranca <- subset(oquebranca, qtd>3)
+tretasbrancas <- ggplot(oquebranca, aes(label = oque, size=qtd)) +
+  geom_text_wordcloud_area() +
+  scale_size_area(max_size = 100) +
+  labs(title = "tags de candidates branques")
+tretasbrancas
+
+
+oquenegra <- unlist(strsplit(hashnegra$Legendas, "#"))
+oquenegra <- str_replace_all(oquenegra, " ", "")
+oquenegra <-  table(oquenegra)
+oquenegra <- cbind(oque=row.names(oquenegra), qtd=oquenegra)
+oquenegra <- as.data.frame.matrix(oquenegra)
+oquenegra$qtd <- as.character(oquenegra$qtd)
+oquenegra$qtd <- as.numeric(oquenegra$qtd)
+oquenegra <- subset(oquenegra, qtd>1)
+tretasnegras <- ggplot(oquenegra, aes(label = oque, size=qtd)) +
+  geom_text_wordcloud_area() +
+  scale_size_area(max_size = 100) +
+  labs(title = "tags de candidates negres")
+tretasnegras
+```
+
+## Veja a base
+```{r}
+paged_table(base)
+```
+
